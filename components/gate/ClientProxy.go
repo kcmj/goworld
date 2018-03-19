@@ -84,6 +84,7 @@ func (cp *ClientProxy) serve() {
 		if pkt != nil {
 			gateService.clientPacketQueue <- clientProxyMessage{cp, proto.Message{msgtype, pkt}}
 		} else if err != nil && !gwioutil.IsTimeoutError(err) {
+			gwlog.Debugf("%s error: %s", err)
 			if netutil.IsConnectionError(err) {
 				break
 			} else {

@@ -63,3 +63,45 @@ func (sl *StringList) Find(s string) int {
 	}
 	return -1
 }
+
+type EntityIdSet map[EntityID]struct{}
+
+func (es EntityIdSet) Contains(elem EntityID) bool {
+	_, ok := es[elem]
+	return ok
+}
+
+func (es EntityIdSet) Add(elem EntityID) {
+	es[elem] = struct{}{}
+}
+
+func (es EntityIdSet) Remove(elem EntityID) {
+	delete(es, elem)
+}
+
+func (es EntityIdSet) ForEach(callback func(EntityID)) {
+	for elem, _ := range es {
+		callback(elem)
+	}
+}
+
+type Uint16Set map[uint16]struct{}
+
+func (us Uint16Set) Contains(elem uint16) bool {
+	_, ok := us[elem]
+	return ok
+}
+
+func (us Uint16Set) Add(elem uint16) {
+	us[elem] = struct{}{}
+}
+
+func (us Uint16Set) Remove(elem uint16) {
+	delete(us, elem)
+}
+
+func (us Uint16Set) ForEach(callback func(uint16)) {
+	for elem, _ := range us {
+		callback(elem)
+	}
+}

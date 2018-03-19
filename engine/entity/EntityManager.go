@@ -96,14 +96,14 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 
 type _EntityManager struct {
 	entities           EntityMap
-	ownerOfClient      map[common.ClientID]common.EntityID
+	ownerOfClient      map[common.ClientID]common.EntityIdSet
 	registeredServices map[string]EntityIDSet
 }
 
 func newEntityManager() *_EntityManager {
 	return &_EntityManager{
 		entities:           EntityMap{},
-		ownerOfClient:      map[common.ClientID]common.EntityID{},
+		ownerOfClient:      map[common.ClientID]common.EntityIdSet{},
 		registeredServices: map[string]EntityIDSet{},
 	}
 }
@@ -120,20 +120,33 @@ func (em *_EntityManager) get(id common.EntityID) *Entity {
 	return em.entities.Get(id)
 }
 
-func (em *_EntityManager) onEntityLoseClient(clientid common.ClientID) {
-	delete(em.ownerOfClient, clientid)
+func (em *_EntityManager) onEntityLoseClient(entityID common.EntityID, clientid common.ClientID) {
+	if es, ok := em.ownerOfClient[clientid]; ok {
+		es.Remove(entityID)
+		if len(es) <= 0 {
+			delete(em.ownerOfClient, clientid)
+		}
+	}
 }
 
 func (em *_EntityManager) onEntityGetClient(entityID common.EntityID, clientid common.ClientID) {
-	em.ownerOfClient[clientid] = entityID
+	es, ok := em.ownerOfClient[clientid]
+	if !ok {
+		es = common.EntityIdSet{}
+		em.ownerOfClient[clientid] = es
+	}
+	es.Add(entityID)
 }
 
 func (em *_EntityManager) onClientDisconnected(clientid common.ClientID) {
-	eid := em.ownerOfClient[clientid]
-	if !eid.IsNil() { // should always true
-		em.onEntityLoseClient(clientid)
-		owner := em.get(eid)
-		owner.notifyClientDisconnected()
+	if es, ok := em.ownerOfClient[clientid]; ok {
+		es.ForEach(func(entityID common.EntityID) {
+			if !entityID.IsNil() {
+				owner := em.get(entityID)
+				owner.notifyClientDisconnected()
+			}
+		})
+		delete(em.ownerOfClient, clientid)
 	}
 }
 
@@ -141,7 +154,7 @@ func (em *_EntityManager) onGateDisconnected(gateid uint16) {
 	for _, entity := range em.entities {
 		client := entity.client
 		if client != nil && client.gateid == gateid {
-			em.onEntityLoseClient(client.clientid)
+			delete(em.ownerOfClient, client.clientid)
 			entity.notifyClientDisconnected()
 		}
 	}

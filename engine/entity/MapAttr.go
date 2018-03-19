@@ -189,46 +189,71 @@ func (a *MapAttr) _getPathFromOwner() []interface{} {
 
 // Get returns the attribute of specified key in MapAttr
 func (a *MapAttr) Get(key string) interface{} {
-	val, ok := a.attrs[key]
-	if !ok {
-		gwlog.Panicf("key not exists: %s", key)
-	}
-	return val
+	return a.attrs[key]
+	//if !ok {
+		//gwlog.Panicf("key not exists: %s", key)
+	//}
+	//return val
 }
 
 // GetInt returns the attribute of specified key in MapAttr as int64
 func (a *MapAttr) GetInt(key string) int64 {
-	return typeconv.Int(a.Get(key))
+	val := a.Get(key)
+	if val == nil {
+		return 0
+	} else {
+		return typeconv.Int(a.Get(key))
+	}
 }
 
 // GetStr returns the attribute of specified key in MapAttr as string
 func (a *MapAttr) GetStr(key string) string {
 	val := a.Get(key)
-	return val.(string)
+	if val == nil {
+		return ""
+	} else {
+		return val.(string)
+	}
 }
 
 // GetFloat returns the attribute of specified key in MapAttr as float64
 func (a *MapAttr) GetFloat(key string) float64 {
 	val := a.Get(key)
-	return val.(float64)
+	if val == nil {
+		return 0
+	} else {
+		return val.(float64)
+	}
 }
 
 // GetBool returns the attribute of specified key in MapAttr as bool
 func (a *MapAttr) GetBool(key string) bool {
 	val := a.Get(key)
-	return val.(bool)
+	if val == nil {
+		return false
+	} else {
+		return val.(bool)
+	}
 }
 
 // GetMapAttr returns the attribute of specified key in MapAttr as MapAttr
 func (a *MapAttr) GetMapAttr(key string) *MapAttr {
 	val := a.Get(key)
-	return val.(*MapAttr)
+	if val == nil {
+		return nil
+	} else {
+		return val.(*MapAttr)
+	}
 }
 
 // GetListAttr returns the attribute of specified key in MapAttr as ListAttr
 func (a *MapAttr) GetListAttr(key string) *ListAttr {
 	val := a.Get(key)
-	return val.(*ListAttr)
+	if val == nil {
+		return nil
+	} else {
+		return val.(*ListAttr)
+	}
 }
 
 // Pop deletes a key in MapAttr and returns the attribute

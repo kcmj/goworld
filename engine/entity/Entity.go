@@ -141,7 +141,7 @@ func (e *Entity) destroyEntity(isMigrate bool) {
 		e.Save()
 	} else {
 		if e.client != nil {
-			entityManager.onEntityLoseClient(e.client.clientid)
+			entityManager.onEntityLoseClient(e.ID, e.client.clientid)
 			e.client = nil
 		}
 	}
@@ -781,7 +781,7 @@ func (e *Entity) SetClient(client *GameClient) {
 
 	if oldClient != nil {
 		// send destroy entity to client
-		entityManager.onEntityLoseClient(oldClient.clientid)
+		entityManager.onEntityLoseClient(e.ID, oldClient.clientid)
 		dispatchercluster.SendClearClientFilterProp(oldClient.gateid, oldClient.clientid)
 
 		for neighbor := range e.Neighbors {
