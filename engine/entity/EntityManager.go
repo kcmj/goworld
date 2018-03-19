@@ -76,9 +76,9 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 		} else if def == "persistent" {
 			isPersistent = true
 			// make sure non-persistent entity has no persistent attributes
-			if !desc.isPersistent {
-				gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
-			}
+			//if !desc.isPersistent {
+			//	gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
+			//}
 		}
 	}
 

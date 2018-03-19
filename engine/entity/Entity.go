@@ -112,6 +112,10 @@ func (e *Entity) String() string {
 	return fmt.Sprintf("%s<%s>", e.TypeName, e.ID)
 }
 
+func (e *Entity) SetPersistent(persistent bool) {
+	e.typeDesc.SetPersistent(persistent)
+}
+
 // Destroy destroys the entity
 func (e *Entity) Destroy() {
 	if e.destroyed {

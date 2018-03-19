@@ -51,7 +51,7 @@ func (a *MapAttr) ForEach(f func(key string, val interface{})) {
 }
 
 // Set sets the key-attribute pair in MapAttr
-func (a *MapAttr) set(key string, val interface{}) {
+func (a *MapAttr) Set(key string, val interface{}) {
 	var flag attrFlag
 	a.attrs[key] = val
 	if sa, ok := val.(*MapAttr); ok {
@@ -87,73 +87,73 @@ func (a *MapAttr) set(key string, val interface{}) {
 
 // SetInt sets int value at the key
 func (a *MapAttr) SetInt(key string, v int64) {
-	a.set(key, v)
+	a.Set(key, v)
 }
 
 // SetFloat sets float value at the key
 func (a *MapAttr) SetFloat(key string, v float64) {
-	a.set(key, v)
+	a.Set(key, v)
 }
 
 // SetBool sets bool value at the key
 func (a *MapAttr) SetBool(key string, v bool) {
-	a.set(key, v)
+	a.Set(key, v)
 }
 
 // SetStr sets string value at the key
 func (a *MapAttr) SetStr(key string, v string) {
-	a.set(key, v)
+	a.Set(key, v)
 }
 
 // SetMapAttr sets MapAttr value at the key
 func (a *MapAttr) SetMapAttr(key string, attr *MapAttr) {
-	a.set(key, attr)
+	a.Set(key, attr)
 }
 
 // SetListAttr sets ListAttr value at the key
 func (a *MapAttr) SetListAttr(key string, attr *ListAttr) {
-	a.set(key, attr)
+	a.Set(key, attr)
 }
 
 // SetDefaultInt sets default int value at the key
 func (a *MapAttr) SetDefaultInt(key string, v int64) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, v)
+		a.Set(key, v)
 	}
 }
 
 // SetDefaultFloat sets default float value at the key
 func (a *MapAttr) SetDefaultFloat(key string, v float64) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, v)
+		a.Set(key, v)
 	}
 }
 
 // SetDefaultBool sets default bool value at the key
 func (a *MapAttr) SetDefaultBool(key string, v bool) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, v)
+		a.Set(key, v)
 	}
 }
 
 // SetDefaultStr sets default string value at the key
 func (a *MapAttr) SetDefaultStr(key string, v string) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, v)
+		a.Set(key, v)
 	}
 }
 
 // SetDefaultMapAttr sets default MapAttr value at the key
 func (a *MapAttr) SetDefaultMapAttr(key string, attr *MapAttr) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, attr)
+		a.Set(key, attr)
 	}
 }
 
 // SetDefaultListAttr sets default ListAttr value at the key
 func (a *MapAttr) SetDefaultListAttr(key string, attr *ListAttr) {
 	if _, ok := a.attrs[key]; !ok {
-		a.set(key, attr)
+		a.Set(key, attr)
 	}
 }
 
@@ -362,13 +362,13 @@ func (a *MapAttr) AssignMap(doc map[string]interface{}) {
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.set(k, ia)
+			a.Set(k, ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
 			ia.AssignList(iv)
-			a.set(k, ia)
+			a.Set(k, ia)
 		} else {
-			a.set(k, v)
+			a.Set(k, v)
 		}
 	}
 }
@@ -383,13 +383,13 @@ func (a *MapAttr) AssignMapWithFilter(doc map[string]interface{}, filter func(st
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.set(k, ia)
+			a.Set(k, ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
 			ia.AssignList(iv)
-			a.set(k, ia)
+			a.Set(k, ia)
 		} else {
-			a.set(k, v)
+			a.Set(k, v)
 		}
 	}
 }
