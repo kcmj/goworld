@@ -35,6 +35,12 @@ type saveRequest struct {
 	Callback SaveCallbackFunc
 }
 
+type delRequest struct {
+	TypeName string
+	EntityID common.EntityID
+	Callback SaveCallbackFunc
+}
+
 type loadRequest struct {
 	TypeName string
 	EntityID common.EntityID
@@ -70,6 +76,15 @@ func Save(typeName string, entityID common.EntityID, data interface{}, callback 
 		TypeName: typeName,
 		EntityID: entityID,
 		Data:     data,
+		Callback: callback,
+	})
+	checkOperationQueueLen()
+}
+
+func Del(typeName string, entityID common.EntityID, callback SaveCallbackFunc) {
+	operationQueue.Push(saveRequest{
+		TypeName: typeName,
+		EntityID: entityID,
 		Callback: callback,
 	})
 	checkOperationQueueLen()
@@ -284,7 +299,28 @@ func storageRoutine() {
 				storageEngine.Close()
 				storageEngine = nil
 			}
-		} else {
+		} else if delReq, ok := op.(delRequest); ok {
+			// handle del request
+			gwlog.Debugf("storage: DELING %s %s ...", loadReq.TypeName, loadReq.EntityID)
+			monop = opmon.StartOperation("storage.del")
+			err := storageEngine.Del(delReq.TypeName, delReq.EntityID)
+			if err != nil {
+				// del failed ?
+				gwlog.TraceError("storage: del %s %s failed: %s", loadReq.TypeName, loadReq.EntityID, err)
+			}
+
+			monop.Finish(time.Millisecond * 100)
+			if delReq.Callback != nil {
+				post.Post(func() {
+					delReq.Callback()
+				})
+			}
+
+			if err != nil && storageEngine.IsEOF(err) {
+				storageEngine.Close()
+				storageEngine = nil
+			}
+		}else {
 			gwlog.Panicf("storage: unknown operation: %v", op)
 		}
 	}

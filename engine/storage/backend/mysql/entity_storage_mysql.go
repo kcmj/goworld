@@ -145,3 +145,8 @@ func (es *mysqlEntityStorage) Close() {
 func (es *mysqlEntityStorage) IsEOF(err error) bool {
 	return true
 }
+
+func (es *mysqlEntityStorage) Del(typeName string, entityID common.EntityID) error {
+	// TODO
+	return nil
+}

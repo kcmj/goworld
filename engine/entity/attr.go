@@ -5,6 +5,7 @@ type attrFlag int
 const (
 	afClient attrFlag = 1 << iota
 	afAllClient
+	afSyncClient
 )
 
 func getPathFromOwner(a interface{}, path []interface{}) []interface{} {

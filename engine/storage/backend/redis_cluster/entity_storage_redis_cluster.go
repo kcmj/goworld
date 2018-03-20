@@ -121,3 +121,8 @@ func (es *redisClusterEntityStorage) Close() {
 func (es *redisClusterEntityStorage) IsEOF(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }
+
+func (es *redisClusterEntityStorage) Del(typeName string, entityID common.EntityID) error {
+	// TODO
+	return nil
+}

@@ -898,6 +898,9 @@ func (e *Entity) getAttrFlag(attrName string) (flag attrFlag) {
 		flag = afAllClient
 	} else if e.typeDesc.clientAttrs.Contains(attrName) {
 		flag = afClient
+		if e.typeDesc.syncClientAttrs.Contains(attrName) {
+			flag |= afSyncClient
+		}
 	}
 
 	return
@@ -918,7 +921,7 @@ func (e *Entity) sendMapAttrChangeToClients(ma *MapAttr, key string, val interfa
 		for neighbor := range e.Neighbors {
 			neighbor.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 		}
-	} else if flag&afClient != 0 {
+	} else if flag&afSyncClient != 0 {
 		path := ma.getPathFromOwner()
 		e.client.sendNotifyMapAttrChange(e.ID, path, key, val)
 	}

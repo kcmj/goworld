@@ -86,3 +86,9 @@ func (es EntityIDSet) ToList() []common.EntityID {
 	}
 	return list
 }
+
+func (es EntityIDSet) ForEach(callback func(common.EntityID)) {
+	for elem, _ := range es {
+		callback(elem)
+	}
+}

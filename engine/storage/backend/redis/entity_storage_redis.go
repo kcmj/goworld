@@ -117,3 +117,8 @@ func (es *redisEntityStorage) Close() {
 func (es *redisEntityStorage) IsEOF(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }
+
+func (es *redisEntityStorage) Del(typeName string, entityID common.EntityID) error {
+	// TODO
+	return nil
+}

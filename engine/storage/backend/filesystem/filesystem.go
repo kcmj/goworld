@@ -109,6 +109,11 @@ func (es *FileSystemEntityStorage) IsEOF(err error) bool {
 	return false
 }
 
+func (es *FileSystemEntityStorage) Del(typeName string, entityID common.EntityID) error {
+	// TODO
+	return nil
+}
+
 // OpenDirectory opens the directory as filesystem entity storage
 func OpenDirectory(directory string) (storagecommon.EntityStorage, error) {
 	if err := os.MkdirAll(directory, 0755); err != nil {

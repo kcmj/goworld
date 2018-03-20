@@ -33,6 +33,7 @@ type EntityTypeDesc struct {
 	rpcDescs        rpcDescMap
 	allClientAttrs  common.StringSet
 	clientAttrs     common.StringSet
+	syncClientAttrs     common.StringSet
 	persistentAttrs common.StringSet
 	//compositiveMethodComponentIndices map[string][]int
 	//definedAttrs                      bool
@@ -44,6 +45,7 @@ func init() {
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Client"))
 	_VALID_ATTR_DEFS.Add(strings.ToLower("AllClients"))
 	_VALID_ATTR_DEFS.Add(strings.ToLower("Persistent"))
+	_VALID_ATTR_DEFS.Add(strings.ToLower("SyncClient"))
 }
 
 func (desc *EntityTypeDesc) SetPersistent(persistent bool) *EntityTypeDesc {
@@ -58,7 +60,7 @@ func (desc *EntityTypeDesc) SetUseAOI(useAOI bool) *EntityTypeDesc {
 
 func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeDesc {
 	gwlog.Infof("        Attr %s = %v", attr, defs)
-	isAllClient, isClient, isPersistent := false, false, false
+	isAllClient, isClient, isPersistent, isSyncClient := false, false, false, false
 
 	for _, def := range defs {
 		def := strings.ToLower(def)
@@ -79,6 +81,8 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 			//if !desc.isPersistent {
 			//	gwlog.Fatalf("Entity type %s is not persistent, should not define persistent attribute: %s", desc.entityType.Name(), attr)
 			//}
+		} else if def == "syncclient" {
+			isSyncClient = true
 		}
 	}
 
@@ -91,19 +95,22 @@ func (desc *EntityTypeDesc) DefineAttr(attr string, defs ...string) *EntityTypeD
 	if isPersistent {
 		desc.persistentAttrs.Add(attr)
 	}
+	if isSyncClient {
+		desc.syncClientAttrs.Add(attr)
+	}
 	return desc
 }
 
 type _EntityManager struct {
 	entities           EntityMap
-	ownerOfClient      map[common.ClientID]common.EntityIdSet
+	ownerOfClient      map[common.ClientID]EntityIDSet
 	registeredServices map[string]EntityIDSet
 }
 
 func newEntityManager() *_EntityManager {
 	return &_EntityManager{
 		entities:           EntityMap{},
-		ownerOfClient:      map[common.ClientID]common.EntityIdSet{},
+		ownerOfClient:      map[common.ClientID]EntityIDSet{},
 		registeredServices: map[string]EntityIDSet{},
 	}
 }
@@ -122,7 +129,7 @@ func (em *_EntityManager) get(id common.EntityID) *Entity {
 
 func (em *_EntityManager) onEntityLoseClient(entityID common.EntityID, clientid common.ClientID) {
 	if es, ok := em.ownerOfClient[clientid]; ok {
-		es.Remove(entityID)
+		es.Del(entityID)
 		if len(es) <= 0 {
 			delete(em.ownerOfClient, clientid)
 		}
@@ -132,7 +139,7 @@ func (em *_EntityManager) onEntityLoseClient(entityID common.EntityID, clientid 
 func (em *_EntityManager) onEntityGetClient(entityID common.EntityID, clientid common.ClientID) {
 	es, ok := em.ownerOfClient[clientid]
 	if !ok {
-		es = common.EntityIdSet{}
+		es = EntityIDSet{}
 		em.ownerOfClient[clientid] = es
 	}
 	es.Add(entityID)
@@ -214,6 +221,7 @@ func RegisterEntity(typeName string, entity IEntity) *EntityTypeDesc {
 		entityType:      entityType,
 		rpcDescs:        rpcDescs,
 		clientAttrs:     common.StringSet{},
+		syncClientAttrs:     common.StringSet{},
 		allClientAttrs:  common.StringSet{},
 		persistentAttrs: common.StringSet{},
 		//compositiveMethodComponentIndices: map[string][]int{},

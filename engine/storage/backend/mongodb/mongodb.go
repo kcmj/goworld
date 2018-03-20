@@ -112,3 +112,8 @@ func (es *mongoDBEntityStorge) Close() {
 func (es *mongoDBEntityStorge) IsEOF(err error) bool {
 	return err == io.EOF || err == io.ErrUnexpectedEOF
 }
+
+func (es *mongoDBEntityStorge) Del(typeName string, entityID common.EntityID) error {
+	col := es.getCollection(typeName)
+	return col.RemoveId(entityID)
+}
