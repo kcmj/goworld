@@ -320,6 +320,12 @@ func (a *ListAttr) AssignList(l []interface{}) {
 	}
 }
 
+func (a *ListAttr) ForEach(f func(index int, val interface{})) {
+	for i, v := range a.items {
+		f(i, v)
+	}
+}
+
 // NewListAttr creates a new ListAttr
 func NewListAttr() *ListAttr {
 	return &ListAttr{
