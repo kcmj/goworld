@@ -158,32 +158,32 @@ func (a *ListAttr) GetMapAttr(index int) *MapAttr {
 
 // AppendInt puts int value to the end of list
 func (a *ListAttr) AppendInt(v int64) {
-	a.append(v)
+	a.Append(v)
 }
 
 // AppendFloat puts float value to the end of list
 func (a *ListAttr) AppendFloat(v float64) {
-	a.append(v)
+	a.Append(v)
 }
 
 // AppendBool puts bool value to the end of list
 func (a *ListAttr) AppendBool(v bool) {
-	a.append(v)
+	a.Append(v)
 }
 
 // AppendStr puts string value to the end of list
 func (a *ListAttr) AppendStr(v string) {
-	a.append(v)
+	a.Append(v)
 }
 
 // AppendMapAttr puts MapAttr value to the end of list
 func (a *ListAttr) AppendMapAttr(attr *MapAttr) {
-	a.append(attr)
+	a.Append(attr)
 }
 
 // AppendListAttr puts ListAttr value to the end of list
 func (a *ListAttr) AppendListAttr(attr *ListAttr) {
-	a.append(attr)
+	a.Append(attr)
 }
 
 // Pop removes the last item from the end
@@ -229,14 +229,14 @@ func (a *ListAttr) PopMapAttr() *MapAttr {
 }
 
 // append puts item to the end of list
-func (a *ListAttr) append(val interface{}) {
+func (a *ListAttr) Append(val interface{}) {
 	a.items = append(a.items, val)
 	index := len(a.items) - 1
 
 	if sa, ok := val.(*MapAttr); ok {
 		// val is ListAttr, set parent and owner accordingly
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append")
+			gwlog.Panicf("MapAttr reused in Append")
 		}
 
 		sa.parent = a
@@ -247,7 +247,7 @@ func (a *ListAttr) append(val interface{}) {
 		a.sendListAttrAppendToClients(sa.ToMap())
 	} else if sa, ok := val.(*ListAttr); ok {
 		if sa.parent != nil || sa.owner != nil || sa.pkey != nil {
-			gwlog.Panicf("MapAttr reused in append")
+			gwlog.Panicf("MapAttr reused in Append")
 		}
 
 		sa.setParent(a.owner, a, index, a.flag)
@@ -309,13 +309,13 @@ func (a *ListAttr) AssignList(l []interface{}) {
 		if iv, ok := v.(map[string]interface{}); ok {
 			ia := NewMapAttr()
 			ia.AssignMap(iv)
-			a.append(ia)
+			a.Append(ia)
 		} else if iv, ok := v.([]interface{}); ok {
 			ia := NewListAttr()
 			ia.AssignList(iv)
-			a.append(ia)
+			a.Append(ia)
 		} else {
-			a.append(v)
+			a.Append(v)
 		}
 	}
 }
