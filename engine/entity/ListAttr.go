@@ -228,6 +228,11 @@ func (a *ListAttr) PopMapAttr() *MapAttr {
 	return a.pop().(*MapAttr)
 }
 
+func (a *ListAttr) Del(index int) {
+	a.items = append(a.items[:index], a.items[index+1:]...)
+	// TODO sync client
+}
+
 // append puts item to the end of list
 func (a *ListAttr) Append(val interface{}) {
 	a.items = append(a.items, val)
