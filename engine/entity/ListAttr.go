@@ -228,9 +228,19 @@ func (a *ListAttr) PopMapAttr() *MapAttr {
 	return a.pop().(*MapAttr)
 }
 
-func (a *ListAttr) Del(index int) {
-	a.items = append(a.items[:index], a.items[index+1:]...)
-	// TODO sync client
+func (a *ListAttr) Del(val interface{}) {
+	index := -1
+	for i, val2 := range a.items {
+		if val == val2 {
+			index = i
+			break
+		}
+	}
+
+	if index >= 0 {
+		a.items = append(a.items[:index], a.items[index+1:]...)
+		// TODO sync client
+	}
 }
 
 // append puts item to the end of list
@@ -325,9 +335,11 @@ func (a *ListAttr) AssignList(l []interface{}) {
 	}
 }
 
-func (a *ListAttr) ForEach(f func(index int, val interface{})) {
+func (a *ListAttr) ForEach(f func(index int, val interface{}) bool) {
 	for i, v := range a.items {
-		f(i, v)
+		if !f(i, v) {
+			break
+		}
 	}
 }
 
