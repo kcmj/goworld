@@ -195,19 +195,11 @@ func (gs *GateService) handleClientConnection(netconn net.Conn, isWebSocket bool
 	}
 
 	// pass the client proxy to GateService ...
-	if isWebSocket {
-		post.Post(func() {
-			gs.clientProxies[cp.clientid] = cp
-			dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
-		})
-		cp.serve()
-	} else {
-		post.Post(func() {
-			gs.clientProxies[cp.clientid] = cp
-			dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
-			go cp.serve()
-		})
-	}
+	post.Post(func() {
+		gs.clientProxies[cp.clientid] = cp
+		dispatchercluster.SelectByGateID(gateid).SendNotifyClientConnected(cp.clientid)
+	})
+	cp.serve()
 }
 
 func (gs *GateService) checkClientHeartbeats() {
