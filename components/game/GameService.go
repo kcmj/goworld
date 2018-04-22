@@ -154,6 +154,12 @@ func (gs *GameService) serveRoutine() {
 			} else if msgtype == proto.MT_START_FREEZE_GAME_ACK {
 				dispid := pkt.ReadUint16()
 				gs.HandleStartFreezeGameAck(dispid)
+			} else if msgtype == proto.MT_CALL_ENTITY_METHOD {
+				eid := pkt.ReadEntityID()
+				seq := pkt.ReadUint32()
+				method := pkt.ReadVarStr()
+				args := pkt.ReadArgs()
+				gs.HandleRpcCallEntityMethod(eid, seq, method, args, "")
 			} else {
 				gwlog.TraceError("unknown msgtype: %v", msgtype)
 				if consts.DEBUG_MODE {
@@ -365,6 +371,13 @@ func (gs *GameService) HandleCallEntityMethod(entityID common.EntityID, method s
 		gwlog.Debugf("%s.handleCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
 	}
 	entity.OnCall(entityID, method, args, clientid)
+}
+
+func (gs *GameService) HandleRpcCallEntityMethod(entityID common.EntityID, seq uint32, method string, args [][]byte, clientid common.ClientID) {
+	if consts.DEBUG_PACKETS {
+		gwlog.Debugf("%s.handleRpcCallEntityMethod: %s.%s(%v)", gs, entityID, method, args)
+	}
+	reply := entity.OnCall(entityID, method, args, clientid)
 }
 
 func (gs *GameService) HandleNotifyClientConnected(clientid common.ClientID, gateid uint16) {

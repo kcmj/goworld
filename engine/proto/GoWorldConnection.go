@@ -11,6 +11,8 @@ import (
 	"github.com/xiaonanln/goworld/engine/gwlog"
 	"github.com/xiaonanln/goworld/engine/netutil"
 	"github.com/xiaonanln/goworld/engine/netutil/compress"
+	"sync"
+	"sync/atomic"
 )
 
 // GoWorldConnection is the network protocol implementation of GoWorld components (dispatcher, gate, game)
@@ -18,6 +20,10 @@ type GoWorldConnection struct {
 	packetConn   *netutil.PacketConnection
 	closed       xnsyncutil.AtomicBool
 	autoFlushing bool
+
+	rpcSeq     uint32
+	rpcLock    sync.Mutex  // protects following
+	rpcPending map[uint32]chan *RpcResult
 }
 
 // NewGoWorldConnection creates a GoWorldConnection using network connection
@@ -118,6 +124,31 @@ func (gwc *GoWorldConnection) SendCallEntityMethod(id common.EntityID, method st
 	packet.AppendVarStr(method)
 	packet.AppendArgs(args)
 	return gwc.SendPacketRelease(packet)
+}
+
+// SendRpcCallEntityMethod sends MT_RPC_CALL_ENTITY_METHOD message
+func (gwc *GoWorldConnection) SendRpcCallEntityMethod(id common.EntityID, method string, args []interface{}) *RpcResult {
+	packet := gwc.packetConn.NewPacket()
+	packet.AppendUint16(MT_RPC_CALL_ENTITY_METHOD)
+	packet.AppendEntityID(id)
+	seq := atomic.AddUint32(&gwc.rpcSeq, 1)
+	packet.AppendUint32(seq)
+	packet.AppendVarStr(method)
+	packet.AppendArgs(args)
+
+	c := make(chan *RpcResult, 1)
+	gwc.rpcLock.Lock()
+	gwc.rpcPending[seq] = c
+	gwc.rpcLock.Unlock()
+	err := gwc.SendPacketRelease(packet)
+
+	if err != nil {
+		return &RpcResult{
+			Error: err,
+		}
+	}
+	// TODO
+	return <- c
 }
 
 // SendCallEntityMethodFromClient sends MT_CALL_ENTITY_METHOD_FROM_CLIENT message

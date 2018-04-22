@@ -16,6 +16,11 @@ type Message struct {
 	Packet  *netutil.Packet
 }
 
+type RpcResult struct {
+	Reply   interface{}
+	Error error
+}
+
 const (
 	// MT_INVALID is the invalid message type
 	MT_INVALID = iota
@@ -65,6 +70,8 @@ const (
 
 	// MT_CALL_NIL_SPACES message is used to call nil spaces on all games
 	MT_CALL_NIL_SPACES
+
+	MT_RPC_CALL_ENTITY_METHOD
 )
 
 // Alias message types

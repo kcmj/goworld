@@ -18,9 +18,12 @@ import (
 	"github.com/xiaonanln/goworld/engine/post"
 	"github.com/xiaonanln/goworld/engine/storage"
 	"github.com/xiaonanln/typeconv"
+	"github.com/xiaonanln/goworld/engine/proto"
+	"fmt"
 )
 
 var (
+	rpcSeq uint32 = 0
 	registeredEntityTypes = map[string]*EntityTypeDesc{}
 	entityManager         = newEntityManager()
 )
@@ -448,6 +451,16 @@ func Call(id common.EntityID, method string, args []interface{}) {
 	}
 }
 
+func RpcCall(id common.EntityID, method string, args []interface{}) *proto.RpcResult {
+	if consts.OPTIMIZE_LOCAL_ENTITY_CALL {
+		e := entityManager.get(id)
+		if e != nil { // this entity is local, just call entity directly
+			return e.onCallFromLocal(method, args)
+		}
+	}
+	return rpcCallRemote(id, method, args)
+}
+
 func CallService(serviceName string, method string, args []interface{}) {
 	serviceEid := entityManager.chooseServiceProvider(serviceName)
 	Call(serviceEid, method, args)
@@ -470,22 +483,29 @@ func callRemote(id common.EntityID, method string, args []interface{}) {
 	dispatchercluster.SelectByEntityID(id).SendCallEntityMethod(id, method, args)
 }
 
+func rpcCallRemote(id common.EntityID, method string, args []interface{}) *proto.RpcResult {
+	return dispatchercluster.SelectByEntityID(id).SendRpcCallEntityMethod(id, method, args)
+}
+
 var lastWarnedOnCallMethod = ""
 
 // OnCall is called by engine when method call reaches in the game
-func OnCall(id common.EntityID, method string, args [][]byte, clientID common.ClientID) {
+func OnCall(id common.EntityID, method string, args [][]byte, clientID common.ClientID) *proto.RpcResult {
 	e := entityManager.get(id)
 	if e == nil {
 		// entity not found, may destroyed before call
+		errLog := fmt.Sprintf("OnCall: entity %s is not found while calling %s", id, method)
 		if method != lastWarnedOnCallMethod {
-			gwlog.Warnf("OnCall: entity %s is not found while calling %s", id, method)
+			gwlog.Warnf(errLog)
 			lastWarnedOnCallMethod = method
 		}
 
-		return
+		return &proto.RpcResult{
+			Error: errors.New(errLog),
+		}
 	}
 
-	e.onCallFromRemote(method, args, clientID)
+	return e.onCallFromRemote(method, args, clientID)
 }
 
 // OnSyncPositionYawFromClient is called by engine to sync entity infos from client

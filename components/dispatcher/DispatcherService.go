@@ -241,6 +241,8 @@ func (service *DispatcherService) messageLoop() {
 			} else if msgtype == proto.MT_START_FREEZE_GAME {
 				// freeze the game
 				service.handleStartFreezeGame(dcp, pkt)
+			} else if msgtype == proto.MT_RPC_CALL_ENTITY_METHOD {
+				service.handleCallEntityMethod(dcp, pkt)
 			} else {
 				gwlog.TraceError("unknown msgtype %d from %s", msgtype, dcp)
 				if consts.DEBUG_MODE {

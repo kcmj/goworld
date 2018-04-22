@@ -21,6 +21,7 @@ import (
 	"github.com/xiaonanln/goworld/engine/proto"
 	"github.com/xiaonanln/goworld/engine/storage"
 	"github.com/xiaonanln/typeconv"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -493,6 +494,10 @@ func (e *Entity) Call(id common.EntityID, method string, args ...interface{}) {
 	Call(id, method, args)
 }
 
+func (e *Entity) RpcCall(id common.EntityID, method string, args ...interface{}) *proto.RpcResult {
+	return RpcCall(id, method, args)
+}
+
 // CallService calls a service provider
 func (e *Entity) CallService(serviceName string, method string, args ...interface{}) {
 	CallService(serviceName, method, args)
@@ -510,11 +515,15 @@ func (e *Entity) SetClientSyncing(syncing bool) {
 	e.syncingFromClient = syncing
 }
 
-func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
+func (e *Entity) onCallFromLocal(methodName string, args []interface{}) (reply *proto.RpcResult) {
 	defer func() {
-		err := recover() // recover from any error during RPC call
-		if err != nil {
-			gwlog.TraceError("%s.%s paniced: %s", e, methodName, err)
+		_err := recover() // recover from any error during RPC call
+		if _err != nil {
+			errLog := fmt.Sprintf("%s.%s paniced: %s", e, methodName, _err)
+			reply = &proto.RpcResult{
+				Error: errors.New(errLog),
+			}
+			gwlog.TraceError(errLog)
 		}
 	}()
 
@@ -548,22 +557,34 @@ func (e *Entity) onCallFromLocal(methodName string, args []interface{}) {
 		in[i+1] = reflect.Zero(argType)
 	}
 
-	rpcDesc.Func.Call(in)
+	replys := rpcDesc.Func.Call(in)
+	replyNum := len(replys)
+	if replyNum == 0 {
+		return
+	} else if replyNum == 1 {
+		reply = replys[0].Interface().(*proto.RpcResult)
+	} else {
+		gwlog.Panicf("%s.onCallFromLocal: Method %s reply %d value", e, methodName, replyNum)
+	}
+	return
 }
 
-func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid common.ClientID) {
+func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid common.ClientID) (reply *proto.RpcResult) {
 	defer func() {
-		err := recover() // recover from any error during RPC call
-		if err != nil {
-			gwlog.TraceError("%s.%s paniced: %s", e, methodName, err)
+		_err := recover() // recover from any error during RPC call
+		if _err != nil {
+			errLog := fmt.Sprintf("%s.%s paniced: %s", e, methodName, _err)
+			reply = &proto.RpcResult{
+				Error: errors.New(errLog),
+			}
+			gwlog.TraceError(errLog)
 		}
 	}()
 
 	rpcDesc := e.typeDesc.rpcDescs[methodName]
 	if rpcDesc == nil {
 		// rpc not found
-		gwlog.Errorf("%s.onCallFromRemote: Method %s is not a valid RPC, args=%v", e, methodName, args)
-		return
+		gwlog.Panicf("%s.onCallFromRemote: Method %s is not a valid RPC, args=%v", e, methodName, args)
 	}
 
 	methodType := rpcDesc.MethodType
@@ -583,7 +604,7 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 	}
 
 	if rpcDesc.NumArgs < len(args) {
-		gwlog.Errorf("%s.onCallFromRemote: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
+		gwlog.Panicf("%s.onCallFromRemote: Method %s receives %d arguments, but given %d", e, methodName, rpcDesc.NumArgs, len(args))
 		return
 	}
 
@@ -607,7 +628,16 @@ func (e *Entity) onCallFromRemote(methodName string, args [][]byte, clientid com
 		in[i+1] = reflect.Zero(argType)
 	}
 
-	rpcDesc.Func.Call(in)
+	replys := rpcDesc.Func.Call(in)
+	replyNum := len(replys)
+	if replyNum == 0 {
+		return
+	} else if replyNum == 1 {
+		reply = replys[0].Interface().(*proto.RpcResult)
+	} else {
+		gwlog.Panicf("%s.onCallFromRemote: Method %s reply %d value", e, methodName, replyNum)
+	}
+	return
 }
 
 // DeclareService declares global service for service entity
